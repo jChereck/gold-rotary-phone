@@ -31,25 +31,20 @@ int main(){
 	//Normalize mX
 	printf("mX min %f and max %f\n", mX.min(), mX.max());
 
-	double mXcolMin[mX.numCols()];
-	double mXcolMax[mX.numCols()];
-
-	for( int i = 0; i < mX.numCols(); i++ ){
-		printf("min: %f max: %f\n", mX.minCol(i), mX.maxCol(i));
-		mXcolMin[i] = mX.minCol(i);
-		mXcolMax[i] = mX.maxCol(i);
-	}
-
-	for( int i = 0; i < mX.numCols(); i++ ){
-		printf("min: %f max: %f\n", mXcolMin[i], mXcolMax[i]);
-	}
-	
-	mX.normalizeCols();
+	//Save min/max of each col to unnormalize later
+	Matrix mXnorm = mX.normalizeCols();
 
 	mX.print();
-	
-	
-	
+
+	//Add Bias col to mX
+	Matrix mXb(mX.numRows(), mX.numCols() + 1, 1.0);
+	mXb.print();
+
+	mXb.insert(mX, 0, 0);
+
+	mXb.print();
+
+
 	return 0;
 }
 
