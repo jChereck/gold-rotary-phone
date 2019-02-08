@@ -1,7 +1,18 @@
 #include  "rand.h"
 #include "mat.h"
+#include <math.h>
+
+#define weightInitMax 1.0
+#define weightInitMin 0.0
+#define TRANSFER_SLOPE 1.0
+
+double transfer(double x){
+	return 1/(1.0 + exp(-1.0 * TRANSFER_SLOPE * x));
+}
 
 int main(){
+
+	initRand();
 
 	int numIn, readStatus;
 	readStatus = scanf("%d", &numIn);
@@ -23,7 +34,9 @@ int main(){
 	printf("Splitting Training Data\n");
 
 	Matrix mX = mIn.extract(0, 0, 0, numIn);
+	mX.setName("mX");
 	Matrix mT = mIn.extract(0, numIn, 0, 0);
+	mT.setName("mT");
 
 	mX.print();
 	mT.print();
@@ -38,14 +51,52 @@ int main(){
 
 	//Add Bias col to mX
 	Matrix mXb(mX.numRows(), mX.numCols() + 1, 1.0);
-	mXb.print();
-
+	mXb.setName("mX with Bias");
 	mXb.insert(mX, 0, 0);
 
 	mXb.print();
+
+	//Create Weights column
+	printf("mW rows: %d cols: %d\n", mXb.numCols(), mT.numCols());
+	Matrix mW(mXb.numCols(), mT.numCols()); 
+	mW.setName("Weights");
+	mW.rand(weightInitMin, weightInitMax);
+	mW.print();
+
+	//compute Y
+	Matrix mY = mXb.dot(mW);
+	mY.setName("Output");
+
+	mY.print();
+
+	mY.map(transfer);
+
+	mY.print();
+
+	/*
+	//Forward Propigate and Learn
+	double eta = 0.4;
+	for( int reps = 0; reps < 10; reps++ ){
+
+		//compute Y
+		Matrix mY = mXb.dot(mW);
+		mY.setName("Output");
+	
+		mY.print();
+
+		//update Weights
+		Matrix diff(mY);
+		diff.sub(mT).abs();
+		diff.print();
+		diff.scalarMul(eta);
+		diff.print();
+
+		mW.add(diff);
+	}
+	*/
+	
 
 
 	return 0;
 }
 
-//
