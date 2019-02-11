@@ -2,7 +2,7 @@
 BIN=nn
 
 # what you want to name your tar/zip file:
-TARNAME=mat31C
+TARNAME=ChereckAss1CS475
 CXX=g++
 
 CXXFLAGS=-O3 -Wall   # optimize
@@ -36,7 +36,7 @@ clean:
 	/bin/rm -f *.o $(BIN)*.tar *~ core gmon.out a.out
 
 tar:
-	tar -cvzf $(TARNAME).tar makefile $(EXAMPLES) $(SRCS) $(HDRS) $(EXTRAS)
+	tar -cvf $(TARNAME).tar makefile $(EXAMPLES) $(SRCS) $(HDRS)
 	ls -l $(TARNAME).tar
 
 zip:
