@@ -69,9 +69,33 @@ int main(){
 
 	mY.print();
 
+	//Apply transfer function to Y
 	mY.map(transfer);
 
 	mY.print();
+
+	//Edit weights
+	double eta = 0.4;
+
+	Matrix mAdj(mY);
+	mAdj.sub(mT);
+	Matrix mAdj2 = mXb.Tdot(mAdj);
+	mAdj2.scalarMul(eta);
+	
+	mW.sub(mAdj2);
+	
+	mW.print();
+
+	//compute Y2
+	Matrix mY2 = mXb.dot(mW);
+	mY2.setName("Output 2");
+
+	mY2.print();
+
+	//Apply transfer function to Y
+	mY2.map(transfer);
+
+	mY2.print();
 
 	/*
 	//Forward Propigate and Learn
