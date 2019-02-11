@@ -5,6 +5,7 @@
 #define weightInitMax 1.0
 #define weightInitMin 0.0
 #define TRANSFER_SLOPE 1.0
+#define ITERATIONS 200
 
 double transfer(double x){
 	return 1/(1.0 + exp(-1.0 * TRANSFER_SLOPE * x));
@@ -63,36 +64,40 @@ int main(){
 	mW.rand(weightInitMin, weightInitMax);
 	mW.print();
 
-	//compute Y
-	Matrix mY = mXb.dot(mW);
-	mY.setName("Output");
-
-	mY.print();
-
-	//Apply transfer function to Y
-	mY.map(transfer);
-
-	mY.print();
-
-	//Edit weights
-	double eta = 0.4;
-
-	Matrix mAdj(mY);
-	mAdj.sub(mT);
-	Matrix mAdj2 = mXb.Tdot(mAdj);
-	mAdj2.scalarMul(eta);
+	for(int i = 0; i < ITERATIONS; i++){
+		//printf("\nITERATION %d:\n", i);
+		//compute Y
+		Matrix mY = mXb.dot(mW);
+		mY.setName("Output");
 	
-	mW.sub(mAdj2);
+		//mY.print();
 	
-	mW.print();
-
-	//compute Y2
+		//Apply transfer function to Y
+		mY.map(transfer);
+	
+		//mY.print();
+	
+		//Edit weights
+		double eta = 0.4;
+	
+		Matrix mAdj(mY);
+		mAdj.sub(mT);
+		Matrix mAdj2 = mXb.Tdot(mAdj);
+		mAdj2.scalarMul(eta);
+		
+		mW.sub(mAdj2);
+		
+		//mW.print();
+	}
+	
+	//compute final output from learning data
+	printf("\nFINAL OUTPUT:\n");
 	Matrix mY2 = mXb.dot(mW);
 	mY2.setName("Output 2");
 
 	mY2.print();
 
-	//Apply transfer function to Y
+	//Apply transfer function to final output
 	mY2.map(transfer);
 
 	mY2.print();
