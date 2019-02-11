@@ -97,30 +97,6 @@ int main(){
 
 	mY2.print();
 
-	/*
-	//Forward Propigate and Learn
-	double eta = 0.4;
-	for( int reps = 0; reps < 10; reps++ ){
-
-		//compute Y
-		Matrix mY = mXb.dot(mW);
-		mY.setName("Output");
-	
-		mY.print();
-
-		//update Weights
-		Matrix diff(mY);
-		diff.sub(mT).abs();
-		diff.print();
-		diff.scalarMul(eta);
-		diff.print();
-
-		mW.add(diff);
-	}
-	*/
-	
-
-
 	return 0;
 }
 
