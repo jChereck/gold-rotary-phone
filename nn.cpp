@@ -2,12 +2,13 @@
 #include "mat.h"
 #include <math.h>
 
-#define weightInitMax 1.0
-#define weightInitMin 0.0
-#define TRANSFER_SLOPE 1.0
-#define ITERATIONS 200
+#define weightInitMax 0000.0
+#define weightInitMin -10.000
+#define TRANSFER_SLOPE 0.50
+#define ITERATIONS 4500
+#define ETA 0.010
 
-Matrix predict(int numIn, Matrix mW);
+void predict(int numIn, Matrix mW);
 Matrix train(int numIn);
 
 double transfer(double x){
@@ -16,8 +17,10 @@ double transfer(double x){
 
 int main(){
 
+	//Initialize randomization function for weight initialization
 	initRand();
 
+	//read in number of inputs from stdin
 	int numIn, readStatus;
 	readStatus = scanf("%d", &numIn);
 
@@ -26,53 +29,48 @@ int main(){
 		exit(-1);
 	}
 	
-	//printf("Inputs: %d\n", numIn);
-
+	//Train on data from stdin and return weights
 	Matrix Weights = train(numIn);
 	
+	//Test with trained weights on new data from stdin
 	printf("BEGIN TESTING\n");
 	predict(numIn, Weights);
 
 	return 0;
 }
 
-Matrix predict(int numIn, Matrix mW){
+void predict(int numIn, Matrix mW){
 
 	//Read in prediction matrix data
-	Matrix mX("Prediction Data In");
-	mX.read();
+	Matrix mIn("Prediction Data In");
+	mIn.read();
 
-	//mX.print();
+	//Duplicate prediction data to manipulate
+	Matrix mX(mIn, "Prediction Data");
 
 	//Normalize mX
-	//printf("mX min %f and max %f\n", mX.min(), mX.max());
+	mX.normalizeCols();
 
-	//Save min/max of each col to unnormalize later
-	Matrix mXnorm = mX.normalizeCols();
-
-	mX.print();
-
-	//Add Bias col to mX
+	//Add Bias col to mX (as mXb)
 	Matrix mXb(mX.numRows(), mX.numCols() + 1, 1.0);
 	mXb.setName("mX with Bias");
 	mXb.insert(mX, 0, 0);
 
-	//mXb.print();
-
-	
-	//compute output for prediction
-	//printf("\nFINAL OUTPUT:\n");
+	//Compute output for prediction
 	Matrix mY2 = mXb.dot(mW);
 	mY2.setName("Final Output");
-
-	//mY2.print();
 
 	//Apply transfer function to final output
 	mY2.map(transfer);
 
-	mY2.print();
+	//Print output to assignment specs
+	for(int i = 0; i < mY2.numRows(); i++){
+		mIn.writeLine(i);
+		mY2.writeLine(i);
+		printf("\n");
+	}
 
-	return mY2;
+	return;
 }
 
 Matrix train(int numIn){
@@ -81,78 +79,41 @@ Matrix train(int numIn){
 	Matrix mIn("Raw Training Data");
 	mIn.read();
 
-	//mIn.print();
-
 	//Split raw input into X and T matricies
-	//printf("Splitting Training Data\n");
-
 	Matrix mX = mIn.extract(0, 0, 0, numIn);
 	mX.setName("mX");
 	Matrix mT = mIn.extract(0, numIn, 0, 0);
 	mT.setName("mT");
 
-	//mX.print();
-	//mT.print();
-
 	//Normalize mX
-	//printf("mX min %f and max %f\n", mX.min(), mX.max());
+	mX.normalizeCols();
 
-	//Save min/max of each col to unnormalize later
-	Matrix mXnorm = mX.normalizeCols();
-
-	//mX.print();
-
-	//Add Bias col to mX
+	//Add Bias col to mX (as mXb)
 	Matrix mXb(mX.numRows(), mX.numCols() + 1, 1.0);
 	mXb.setName("mX with Bias");
 	mXb.insert(mX, 0, 0);
 
-	//mXb.print();
-
 	//Create Weights column
-	//printf("mW rows: %d cols: %d\n", mXb.numCols(), mT.numCols());
 	Matrix mW(mXb.numCols(), mT.numCols()); 
 	mW.setName("Weights");
 	mW.rand(weightInitMin, weightInitMax);
-	//mW.print();
 
 	for(int i = 0; i < ITERATIONS; i++){
-		//printf("\nITERATION %d:\n", i);
 		//compute Y
 		Matrix mY = mXb.dot(mW);
 		mY.setName("Output");
 	
-		//mY.print();
-	
 		//Apply transfer function to Y
 		mY.map(transfer);
 	
-		//mY.print();
-	
 		//Edit weights
-		double eta = 0.4;
-	
 		Matrix mAdj(mY);
 		mAdj.sub(mT);
 		Matrix mAdj2 = mXb.Tdot(mAdj);
-		mAdj2.scalarMul(eta);
+		mAdj2.scalarMul(ETA);
 		
 		mW.sub(mAdj2);
-		
-		//mW.print();
 	}
 	
-	//compute final output from learning data
-	//printf("\nFINAL OUTPUT:\n");
-	Matrix mY2 = mXb.dot(mW);
-	mY2.setName("Output 2");
-
-	//mY2.print();
-
-	//Apply transfer function to final output
-	mY2.map(transfer);
-
-	//mY2.print();
-
 	return mW;
 }
