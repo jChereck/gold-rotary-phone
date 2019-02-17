@@ -28,6 +28,24 @@ int main(){
 		printf("Error Reading Input\n");
 		exit(-1);
 	}
+
+	//Read in number of hidden nodes
+	int numHidNodes;
+	readStatus = scanf("%d", &numHidNodes);
+
+	if( readStatus == 0 ){
+		printf("Error Reading Input\n");
+		exit(-1);
+	}
+
+	//Read in number of classes
+	int numClasses;
+	readStatus = scanf("%d", &numClasses);
+
+	if( readStatus == 0 ){
+		printf("Error Reading Input\n");
+		exit(-1);
+	}
 	
 	//Train on data from stdin and return weights
 	Matrix Weights = train(numIn);
@@ -41,12 +59,15 @@ int main(){
 
 void predict(int numIn, Matrix mW){
 
-	//Read in prediction matrix data
-	Matrix mIn("Prediction Data In");
+	//Read in training matrix data
+	Matrix mIn("Raw Training Data");
 	mIn.read();
 
-	//Duplicate prediction data to manipulate
-	Matrix mX(mIn, "Prediction Data");
+	//Split raw input into X and T matricies
+	Matrix mX = mIn.extract(0, 0, 0, numIn);
+	mX.setName("mX");
+	Matrix mT = mIn.extract(0, numIn, 0, 0);
+	mT.setName("mT");
 
 	//Normalize mX
 	mX.normalizeCols();
