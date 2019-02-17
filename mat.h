@@ -16,8 +16,11 @@
 // adds to self.  See further in this comment block.
 //
 // Author: Robert B. Heckendorn, University of Idaho, 2019
-// Version: 3.1C
-// Date: Jan 18, 2019
+// Version: 3.3W
+// Date: Feb 15, 2019
+
+// IMPORTANT: If running on MICROSOFT WINDOWS uncomment this define statement!
+// #define WINDOWS
 
 // 
 // WARNING: Most matrix library routines REPLACE the contents of the matrix
@@ -38,10 +41,14 @@
 #include <string>       // matrix names are strings
 #include "rand.h"       // portable random number generator.  Include exactly
                         // ONE of the random number cpp files in your compile
+// #define WALSH           // activate the Walsh library by defining this symbol
 
 static const double EPSILONOFZERO=1E-8;
 
 class Matrix;
+
+// helper function
+int bitCount(unsigned int w);
 
 // // // // // // // // // // // // // // // // 
 //
@@ -99,6 +106,11 @@ private:  // private methods
     bool deallocate();
     void reallocate(int othermaxr, int othermaxc, std::string namex);
 
+private:
+    static char *realFormat;
+    static char *intFormat;
+    static char *shortIntFormat;
+
 // constructors
 public:
     Matrix(std::string namex="");
@@ -115,6 +127,7 @@ public:
 public:
     void checkBounds(int r, int c, std::string msg) const;
     void assertColVector(std::string) const;
+    void assertRowsEqual(const Matrix &other, std::string msg) const;
     void assertColsEqual(const Matrix &other, std::string msg) const;
     void assertDefined(std::string msg) const;
     void assertRowIndexOK(int r, std::string msg) const;
@@ -123,7 +136,6 @@ public:
     void assertOtherLhs(const Matrix &other, std::string msg) const;
     void assertOtherSizeMatch(const Matrix &other, std::string msg) const;
     void assertRowVector(std::string) const;
-    void assertRowsEqual(const Matrix &other, std::string msg) const;
     void assertSize(int r, int c, std::string msg) const;
     void assertUsableSize(std::string msg) const;
     void assertSquare(std::string msg) const;
@@ -160,6 +172,7 @@ public:
     int countGreater(const Matrix &other) const; // count number of elements >
     void argMax(int &r, int &c) const;           // what location is the largest in whole array
     void argMin(int &r, int &c) const;           // what location is the smallest in whole array
+    Matrix argMaxRow() const;                    // constructs a column vector of the argmax in each row
     Matrix argMinRow() const;                    // constructs a column vector of the argmin in each row
     Matrix minRow() const;                       // constructs a column vector of the min in each row
     double max() const;                          // minimum in whole array
@@ -196,6 +209,7 @@ public:
     // random initialization (random number generator must be initialized with initRand() )
     // (obviously modifies self)
     Matrix &randCol(int c, double min, double max);  // random reals in given column
+    Matrix &randNorm(double mean, double stddev);    // random reals in normal distribution
     Matrix &rand(double min, double max);            // random reals in range 
     Matrix &rand(int min, int max);                  // random ints in range (doesn't include max)
 
@@ -226,20 +240,24 @@ public:
     Matrix &map(double (*f)(double x));              // apply given function to all elements
     Matrix &mapCol(int c, double (*f)(double x));    // apply given function to all elements in col c
     Matrix &mapIndex(double (*f)(int r, int c, double x)); // apply function to (index, element)
-
     // creates new matrix
     Matrix mapCol(double (*f)(int size, double *x)); // apply function to each column -> one double
     Matrix mapRow(double (*f)(int size, double *x)); // apply function to each row -> one double
     Matrix cartesianRow(double (*)(int, double*, double*), Matrix&);  // apply given function to the cartesian product of two vectors of row vectors
 
-    // insertion and extraction
+    // random actions
     Matrix &sample(Matrix &out);  // extract random rows with replacement into existing matrix out
+    Matrix &shuffle();            // randomly shuffle the rows
+
+    // insertion and extraction
     Matrix &extract(int minr, int minc, int sizer, int sizec, Matrix &out);  // extract into existing matrix out (see other versions of extract)
     Matrix &insert(const Matrix &other, int minr, int minc);    // insert the matrix at minr, minc.   Overflow is ignored.
     Matrix &insertRowVector(int row, const Matrix&);
     Matrix pickRows(int match, const Matrix &list);   // pick rows i in which list[i]==match
-
+    Matrix joinRight(Matrix &other);                 // joins other to the right of self giving new matrix
+    
     // input/output
+    Matrix &printfmt(std::string msg="", std::string fmt=realFormat, bool size=false);  // print matrix and optionally a msg with numbers in given format and with or without size
     Matrix &print(std::string msg="");         // print matrix and its name (returns arg for pipes)
     void printInt(std::string msg="") const;   // print matrix as integers (it will error if not.)
     void printNZ(double epsilon=EPSILONOFZERO, std::string msg="") const;    // print matrix zeroing anything that is near zero
@@ -254,6 +272,10 @@ public:
 private:
     char **readAux(bool labeled, bool transpose);    // general read routine both labeled and un
 
+#ifdef WALSH
+#include "matwalsh.h"
+#endif
+    
 public:
     // WARNING: The following *CONSTRUCT TO NEW MATRIX* for the answer  (BEWARE MEMORY LEAKS!)
     // WARNING: the result of these functions should be used somewhere like in an assignment
@@ -270,7 +292,6 @@ public:
     Matrix cov();                          // covariance matrix (BIASED covariance)
     Matrix cov(Matrix &other);             // covariance matrix (BIASED covariance)
 
-    // alternation versions of operaters that DO NOT create new matrices
     Matrix &transposeSelf();                // transpose in place of SQUARE MATRIX
 
     // special operators (destroys arguments)

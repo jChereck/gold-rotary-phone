@@ -9,17 +9,19 @@
 // to call initRand() before using any random number function!
 //
 // Author: Robert B. Heckendorn, University of Idaho, 2019
-// Version: 3.1C
-// Date: Jan 18, 2019
+// Version: 3.3W
+// Date: Feb 15, 2019
 
 #include "mat.h"
+// can do this in class in C++11
+char *Matrix::realFormat=(char *)"%8.4lf ";   
+char *Matrix::intFormat=(char *)"%8d ";
+char *Matrix::shortIntFormat=(char *)"%5d ";
 
 // the followin are routines taken from the book Numerical Recipes in C
 static void householder(double **a, int n, double d[], double e[]);
 static void eigen(double *d, double *e, int n, double **z);
 static bool gaussj(double **a, int n, double **b, int m);
-
-
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 //
@@ -267,54 +269,40 @@ const std::string &Matrix::getName(const std::string &defaultName) const
 // get the value of an element of the matrix
 double Matrix::get(int r, int c) const
 {
-//    printf("GET:  %llu @  %d %d %lf\n", (unsigned long long int)this, r, c, m[r][c]);
+    assertIndexOK(r, c, "get");
 
     return m[r][c];
 }
 
 
-// increment a given element returning new value
+// increment a given element returning the new value
 double Matrix::inc(int r, int c)
 {
-    if (r<0 || r>=maxr || c<0 || c>=maxc) {
-        printf("ERROR(get): index out of bounds: asking for (%d, %d) but size is %d X %d\n",
-               r, c, maxr, maxc);
-        exit(1);
-    }
+    assertIndexOK(r, c, "inc");
 
     return ++m[r][c];
 }
 
 
-// decrement a given element returning new value
+// decrement a given element returning the new value
 double Matrix::dec(int r, int c)
 {
-    if (r<0 || r>=maxr || c<0 || c>=maxc) {
-        printf("ERROR(get): index out of bounds: asking for (%d, %d) but size is %d X %d\n",
-               r, c, maxr, maxc);
-        exit(1);
-    }
-
+    assertIndexOK(r, c, "dec");
     return --m[r][c];
 }
 
 
-// set the value of an element of the matrix
+// set the value of an element of the matrix returning the new value
 double Matrix::set(int r, int c, double v)
 {
-    if (r<0 || r>=maxr || c<0 || c>=maxc) {
-        printf("ERROR(set): index out of bounds: asking for (%d, %d) but size is %d X %d\n",
-               r, c, maxr, maxc);
-        exit(1);
-    }
-//    printf("SET: %llu @ %d %d %lf\n", (unsigned long long int)this, r, c, v);
+    assertIndexOK(r, c, "set");
     m[r][c] = v;
 
-    return m[r][c];
+    return v;
 }
 
 
-// set the value of an element of the matrix  (use this carefully)
+// set the value of an element of the matrix  (use this carefully!)
 void Matrix::setDefined()
 {
     defined = true;
@@ -328,26 +316,10 @@ void Matrix::setName(std::string newName)
 }
 
 
-// do bounds checking
-void Matrix::checkBounds(int r, int c, std::string msg) const
-{
-    assertIndexOK(r, c, msg);  // zzz fix this so it reads nicer
-    if (r>=maxr  || r<0) {
-        printf("ERROR(%s): asking for row %d but size is %d X %d\n", msg.c_str(), r, maxr, maxc);
-        exit(1);
-     }
-    if (c>=maxc  || c<0) {
-        printf("ERROR(%s): asking for col %d but size is %d X %d\n", msg.c_str(), c, maxr, maxc);
-        exit(1);
-    }
-}
-
-
-
 // remove trailing columns without actually giving up the space.
 void Matrix::narrow(int newc)
 {
-    checkBounds(0, newc-1, "narrow");  // allow newc to equal maxc
+    assertIndexOK(0, newc-1, "narrow");  // allow newc to equal maxc
 
     maxc = newc;
 }
@@ -359,11 +331,16 @@ void Matrix::narrow(int newc)
 // not "visibibly" saved.
 void Matrix::shorten(int newr)
 {
-    checkBounds(newr-1, 0, "shorten");   // allow newr to equal maxr
+    assertIndexOK(newr-1, 0, "shorten");   // allow newr to equal maxr
 
     maxr = newr;
 }
 
+
+// // // // // // // // // // // // // // // // // // // // //
+//
+// Assertions
+//
 
 void Matrix::assertDefined(std::string msg) const
 {
@@ -389,7 +366,6 @@ void Matrix::assertUsableSize(std::string msg) const
         exit(1);
     }
 }
-
 
 
 void Matrix::assertSquare(std::string msg) const
@@ -548,6 +524,40 @@ void Matrix::assertColVector(std::string msg) const
 }
 
 
+// assert row size is a power of 2
+void Matrix::assertRowPower2(std::string msg) const
+{
+    assertDefined(msg);
+
+    if ((maxr & (maxr-1)) != 0) {
+        if (name.length()==0)
+            printf("ERROR(%s): the number of rows in the matrix is %d and not a power of 2 as expected!\n",
+               msg.c_str(), maxr);
+        else
+            printf("ERROR(%s): the number of the rows in the matrix \"%s\" is %d and not a power of 2 as expected!\n",
+               msg.c_str(), name.c_str(), maxr);
+        exit(1);
+    }
+}
+
+
+// assert col size is a power of 2
+void Matrix::assertColPower2(std::string msg) const
+{
+    assertDefined(msg);
+
+    if ((maxc & (maxc-1)) != 0) {
+        if (name.length()==0)
+            printf("ERROR(%s): the number of columns in the matrix is %d and not a power of 2 as expected!\n",
+               msg.c_str(), maxc);
+        else
+            printf("ERROR(%s): the number of the columns in the matrix \"%s\" is %d and not a power of 2 as expected!\n",
+               msg.c_str(), name.c_str(), maxc);
+        exit(1);
+    }
+}
+
+
 // helper function that swaps two rows and does not check matrix for validity
 void Matrix::swapRows(int i, int j)
 {
@@ -571,9 +581,8 @@ bool Matrix::lessRows(int i, int j) const
 }
 
 
-
-
 // assign a matrix.   Size does NOT have to match
+// NOTE: this will copy the matrix values over
 Matrix &Matrix::operator=(const Matrix &other)
 {
     other.assertDefined("operator=");
@@ -595,6 +604,11 @@ Matrix &Matrix::operator=(const Matrix &other)
 }
 
 
+#ifdef WALSH
+#include "matwalsh.cpp"
+#endif
+    
+
 // extracts a matrix from another starting at (minr, minc) and of
 // the size given.
 // NOTE: zero size means "to the end of row or column"!
@@ -604,8 +618,8 @@ Matrix Matrix::extract(int minr, int minc, int sizer, int sizec)
     if (sizer==0) sizer = maxr - minr;
     if (sizec==0) sizec = maxc - minc;
 
-    checkBounds(minr, minc, "lower bounds extract");
-    checkBounds(minr+sizer-1, minc+sizec-1, "upper bounds extract");
+    assertIndexOK(minr, minc, "lower bounds extract");
+    assertIndexOK(minr+sizer-1, minc+sizec-1, "upper bounds extract");
 
     Matrix out(sizer, sizec);
 
@@ -626,7 +640,7 @@ Matrix Matrix::extract(int minr, int minc, int sizer, int sizec)
 Matrix Matrix::extractStride(int minr, int minc, int stepr, int stepc)
 {
     int newr, newc;
-    checkBounds(minr, minc, "lower bounds extract");
+    assertIndexOK(minr, minc, "lower bounds extract");
 
     newr = (maxr-minr + (stepr - 1))/stepr + 1;
     newc = (maxc-minc + (stepc - 1))/stepc + 1;
@@ -685,7 +699,7 @@ Matrix &Matrix::insertRowVector(int loc, const Matrix &other)
 {
     other.assertRowVector("insertRowVector");
     assertColsEqual(other, "insertRowVector");
-    checkBounds(loc, 0, "insertRowVector");
+    assertIndexOK(loc, 0, "insertRowVector");
 
     for (int c=0; c<other.maxc; c++) {
         m[loc][c] = other.m[0][c];
@@ -746,13 +760,39 @@ Matrix Matrix::argMinRow() const
 
     Matrix out(maxr, 1);
 
-    min = m[0][0];
     for (int r=0; r<maxr; r++) {
         min = m[r][0];
         cc = 0;
         for (int c=0; c<maxc; c++) {
             if (m[r][c] < min) {
                 min = m[r][c];
+                cc = c;
+            }
+        }
+        out.m[r][0] = cc;
+    }
+
+    out.defined = true;
+
+    return out;
+}
+
+
+// WARNING: allocates new matrix for answer
+Matrix Matrix::argMaxRow() const
+{
+    int cc;
+    double max;
+    assertDefined("argMaxRow");
+
+    Matrix out(maxr, 1);
+
+    for (int r=0; r<maxr; r++) {
+        max = m[r][0];
+        cc = 0;
+        for (int c=0; c<maxc; c++) {
+            if (m[r][c] > max) {
+                max = m[r][c];
                 cc = c;
             }
         }
@@ -1524,6 +1564,23 @@ Matrix Matrix::pickRows(int match, const Matrix &list)
 
 
 
+// join two matrices side by side returning a new matrix
+Matrix Matrix::joinRight(Matrix &other)
+{
+    assertDefined("joinRight");
+    other.assertDefined("joinRight");
+    assertRowsEqual(other, "joinRight");
+    
+    Matrix out(maxr, maxc + other.numCols(), getName() + "+" + other.getName());
+    out.insert(*this, 0, 0);
+    out.insert(other, 0, maxc);
+
+    out.defined = true;
+
+    return out;
+}
+
+
 // dot or inner product or classic matrix multiply
 // WARNING: allocates new matrix for answer
 Matrix Matrix::dot(const Matrix &other)
@@ -1546,7 +1603,7 @@ Matrix Matrix::dot(const Matrix &other)
     }
 
     out.defined = true;
-
+    
     return out;
 }
 
@@ -2037,6 +2094,21 @@ Matrix &Matrix::randCol(int c, double min, double max)
 }
 
 
+// random reals in normal distribution
+Matrix &Matrix::randNorm(double mean, double stddev)
+{
+    for (int r=0; r<maxr; r++) {
+        for (int c=0; c<maxc; c++) {
+            m[r][c] = ::randNorm(stddev) + mean;
+        }
+    }
+
+    defined = true;
+
+    return *this;
+}
+
+
 // fill with random integers in the given range: [min, max)
 Matrix &Matrix::rand(int min, int max)
 {
@@ -2057,6 +2129,7 @@ Matrix &Matrix::rand(int min, int max)
 // rows in out.
 Matrix &Matrix::sample(Matrix &out)
 {
+    assertDefined("sample");
     assertColsEqual(out, "sample");
 
     for (int r=0; r<out.maxr; r++) {
@@ -2072,6 +2145,26 @@ Matrix &Matrix::sample(Matrix &out)
     return out;
 }
 
+
+// shuffle the rows of the matrix in place
+Matrix &Matrix::shuffle()
+{
+    int rr;
+
+    assertDefined("shuffle");
+
+    // loop through selecting the element to place at location r
+    for (int r=0; r<maxr-1; r++) {
+	double *tmp;
+
+	rr=r+randMod(maxr-r);
+	tmp = m[r];
+	m[r] = m[rr];
+	m[rr] = tmp;
+    }
+
+    return *this;
+}
 
 
 // WARNING: allocates new matrix for answer
@@ -2090,6 +2183,8 @@ Matrix Matrix::transpose()
 
     return out;
 }
+
+
 
 
 // transposes in place, but will reallocate and copy if a nonsquare matrix!
@@ -2226,8 +2321,37 @@ void Matrix::printSize(std::string msg) const
     fflush(stdout);
 }
 
+ 
+// does a formated printing of the matrix
+//  msg is any leading string you want printed first
+//  fmt is the format for the numbers in the matrix (fmt="" sets to default)
+//  if size is true it will print the name and size of the matrix.  The default
+//  is to print the matrix WITHOUT the name and size!
+Matrix &Matrix::printfmt(std::string msg, std::string fmt, bool size)
+{
+    assertDefined("printfnt");
 
-// print the whole matrix including it's name and size
+    if (size) printSize(msg);
+    else if (msg.length()) {
+        printf("%s\n", msg.c_str());
+    }
+
+    if (fmt=="") fmt=Matrix::realFormat;
+        
+    const char *fmtStr = fmt.c_str();  // convert once
+    for (int r=0; r<maxr; r++) {
+        for (int c=0; c<maxc; c++) {
+            printf(fmtStr, m[r][c]);
+        }
+        printf("\n");
+    }
+
+    fflush(stdout);
+
+    return *this;
+}
+
+
 Matrix &Matrix::print(std::string msg)
 {
     assertDefined("print");
@@ -2236,8 +2360,7 @@ Matrix &Matrix::print(std::string msg)
 
     for (int r=0; r<maxr; r++) {
         for (int c=0; c<maxc; c++) {
-            printf("%10.5lf ", m[r][c]);
-//            printf("%7.3lg ", m[r][c]);
+            printf(realFormat, m[r][c]);
         }
         printf("\n");
     }
@@ -2261,7 +2384,7 @@ void Matrix::printInt(std::string msg) const
                 printf("ERROR(printInt): Trying to print an integer matrix but element at position %d, %d is %10.5lg which is not an integer\n", r, c, m[r][c]);
                 exit(1);
             }
-            printf("%5d ", int(m[r][c]));
+            printf(shortIntFormat, int(m[r][c]));
         }
         printf("\n");
     }
@@ -2279,10 +2402,10 @@ void Matrix::printNZ(double epsilon, std::string msg) const
     for (int r=0; r<maxr; r++) {
         for (int c=0; c<maxc; c++) {
             if (fabs(m[r][c]) < epsilon) {
-                printf("%10d ", 0);
+                printf(intFormat, 0);
             }
             else {
-                printf("%10.5lf ", m[r][c]);
+                printf(realFormat, m[r][c]);
             }
         }
         printf("\n");
@@ -2336,7 +2459,7 @@ void Matrix::write()
     printf("%d %d\n", maxr, maxc);
     for (int r=0; r<maxr; r++) {
         for (int c=0; c<maxc; c++) {
-            printf("%lg ", m[r][c]);
+            printf("%.15lg ", m[r][c]);
         }
         printf("\n");
     }
@@ -2349,11 +2472,10 @@ void Matrix::write()
 void Matrix::writeLine(int r)
 {
     assertDefined("write");
-    checkBounds(r, 0, "writeLine");
+    assertIndexOK(r, 0, "writeLine");
 
     for (int c=0; c<maxc; c++) {
-//        printf("%lg ", m[r][c]);
-        printf("%8.2f ", m[r][c]);
+        printf(realFormat, m[r][c]);
     }
 }
 
@@ -2430,10 +2552,10 @@ char **Matrix::readAux(bool labeled, bool transpose)
     numread = scanf("%d", &r);
     if (numread==EOF) {
         if (name.length()==0) {
-            printf("ERROR(read): Trying to read a matrix but end of file was found\n");
+            printf("ERROR(read): Trying to read a matrix from stdin but end of file was found\n");
         }
         else {
-            printf("ERROR(read): Trying to read matrix named \"%s\" but end of file was found\n", name.c_str());
+            printf("ERROR(read): Trying to read matrix named \"%s\" from stdin but end of file was found\n", name.c_str());
         }
         exit(1);
     }
@@ -2444,10 +2566,10 @@ char **Matrix::readAux(bool labeled, bool transpose)
     numread = scanf("%d", &c);
     if (numread==EOF) {
         if (name.length()==0) {
-            printf("ERROR(read): Trying to read a matrix but end of file was found\n");
+            printf("ERROR(read): Trying to read a matrix from stdin but end of file was found\n");
         }
         else {
-            printf("ERROR(read): Trying to read matrix named \"%s\" but end of file was found\n", name.c_str());
+            printf("ERROR(read): Trying to read matrix named \"%s\" from stdin but end of file was found\n", name.c_str());
         }
         exit(1);
     }
@@ -3035,8 +3157,8 @@ Matrix Matrix::subMatrix(int minr, int minc, int sizer, int sizec) const
     if (sizer==0) sizer = maxr - minr;
     if (sizec==0) sizec = maxc - minc;
 
-    checkBounds(minr, minc, "lower bounds extract");
-    checkBounds(minr+sizer-1, minc+sizec-1, "upper bounds extract");
+    assertIndexOK(minr, minc, "lower bounds extract");
+    assertIndexOK(minr+sizer-1, minc+sizec-1, "upper bounds extract");
 
     Matrix out(sizer);                         // allocate a subMatrix!
     out.maxc = sizec;                          // fix internal column width
@@ -3316,17 +3438,14 @@ void Matrix::writeImagePpm(std::string filename, std::string comment)
 }
 
 
-
 // // // // // // // // // // // // // // // // // // // // // // // // 
 //
 // Some random tests for the matrix code
 //
 
+
 /* UNCOMMENT TO HAVE A MAIN FOR TESTING */
 /*
-double f(double x) { return (x>10 ? 1.0 : 0.0); };
-
-double yvalues[] = {2, 3, 5, 7, 11, 13};
 
 int main()
 {
