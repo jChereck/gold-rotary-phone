@@ -4,12 +4,12 @@
 
 #define weightInitMax 1.000
 #define weightInitMin -1.000
-#define TRANSFER_SLOPE 0.50
+#define TRANSFER_SLOPE 2.50
 #define ITERATIONS 10000
 #define ETA 0.100
 
 void train(int numIn, int numHidNodes, Matrix& mV, Matrix& mW);
-void predict(int numIn, Matrix mV, Matrix mW);
+void predict(int numIn, int numHidNodes, Matrix mV, Matrix mW);
 
 double transfer(double x){
 	return 1/(1.0 + exp(-1.0 * TRANSFER_SLOPE * x));
@@ -54,12 +54,12 @@ int main(){
 	
 	//Test with trained weights on new data from stdin
 	printf("BEGIN TESTING\n");
-	predict(numIn, mV, mW);
+	predict(numIn, numHidNodes, mV, mW);
 
 	return 0;
 }
 
-void predict(int numIn, Matrix mV, Matrix mW){
+void predict(int numIn, int numHidNodes, Matrix mV, Matrix mW){
 
 	//Read in training matrix data
 	Matrix mIn("Raw Training Data");
@@ -79,17 +79,36 @@ void predict(int numIn, Matrix mV, Matrix mW){
 	mXb.setName("mX with Bias");
 	mXb.insert(mX, 0, 0);
 
-	//Compute output for prediction
-	Matrix mY2 = mXb.dot(mW);
-	mY2.setName("Final Output");
+	//Create hidden layer and hidden layer with bias
+	Matrix mH(mX.numRows(), numHidNodes, 0.0);
+	mH.setName("mH");
 
-	//Apply transfer function to final output
-	mY2.map(transfer);
+	Matrix mHb(mH.numRows(), mH.numCols() + 1, 1.0);
+	mHb.setName("mH with Bias");
+	mHb.insert(mH, 0, 0);
+
+	//Compute output for prediction
+	//compute H
+	mH = mXb.dot(mV);
+	mH.setName("Hidden Layer");
+
+	//Apply transfer function to H
+	mH.map(transfer);
+
+	//Update mHb
+	mHb.insert(mH, 0, 0);
+
+	//compute Y
+	Matrix mY = mHb.dot(mW);
+	mY.setName("Output");
+
+	//Apply transfer function to Y
+	mY.map(transfer);
 
 	//Print output to assignment specs
-	for(int i = 0; i < mY2.numRows(); i++){
+	for(int i = 0; i < mY.numRows(); i++){
 		mIn.writeLine(i);
-		mY2.writeLine(i);
+		mY.writeLine(i);
 		printf("\n");
 	}
 
@@ -111,41 +130,28 @@ void train(int numIn, int numHidNodes, Matrix& mV, Matrix& mW){
 	//Normalize mX
 	mX.normalizeCols();
 
-	mX.print();
-	mT.print();
-
 	//Add Bias col to mX (as mXb)
 	Matrix mXb(mX.numRows(), mX.numCols() + 1, 1.0);
 	mXb.setName("mX with Bias");
 	mXb.insert(mX, 0, 0);
 
-	mXb.print();
-
 	//Create hidden layer and hidden layer with bias
 	Matrix mH(mX.numRows(), numHidNodes, 0.0);
 	mH.setName("mH");
 
-	mH.print();
-
 	Matrix mHb(mH.numRows(), mH.numCols() + 1, 1.0);
 	mHb.setName("mH with Bias");
 	mHb.insert(mH, 0, 0);
-
-	mHb.print();
 
 	//Create Weights for X->H
 	mV = Matrix(mXb.numCols(), mH.numCols(), 2.0); //2.0 is arbitrary and is overwritten
 	mV.setName("Weights V (X->H)");
 	mV.rand(weightInitMin, weightInitMax);
 
-	mV.print();
-
 	//Create Weights for H->Y
 	mW = Matrix(mXb.numCols(), mT.numCols(), 2.0); //2.0 is arbitrary and is overwritten
 	mW.setName("Weights W (H->Y)");
 	mW.rand(weightInitMin, weightInitMax);
-
-	mW.print();
 
 	for(int i = 0; i < ITERATIONS; i++){
 		//compute H
@@ -160,7 +166,6 @@ void train(int numIn, int numHidNodes, Matrix& mV, Matrix& mW){
 
 		//compute Y
 		Matrix mY = mHb.dot(mW);
-		mY.print();
 		mY.setName("Output");
 	
 		//Apply transfer function to Y
