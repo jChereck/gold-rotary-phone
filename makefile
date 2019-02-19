@@ -3,7 +3,7 @@ BIN=nn
 BIN2=nnoneof
 
 # what you want to name your tar/zip file:
-TARNAME=ChereckAss1CS475
+TARNAME=ChereckAss2CS475
 CXX=g++
 
 CXXFLAGS=-O3 -Wall   # optimize
@@ -39,7 +39,7 @@ $(BIN): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(OBJS) $(LIBS) -o $(BIN)
 
 $(BIN2): $(OBJS2)
-	$(CXX) $(CXXFLAGS) $(OBJS2) $(LIBS) -o $(BIN)
+	$(CXX) $(CXXFLAGS) $(OBJS2) $(LIBS) -o $(BIN2)
 
 clean:
 	/bin/rm -f *.o $(BIN)*.tar *~ core gmon.out a.out

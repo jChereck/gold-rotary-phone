@@ -5,7 +5,7 @@
 #define weightInitMax 1.000
 #define weightInitMin -1.000
 #define TRANSFER_SLOPE 2.50
-#define ITERATIONS 50000
+#define ITERATIONS 10000
 #define ETA 0.200
 
 void train(int numIn, int numHidNodes, Matrix& mV, Matrix& mW);
@@ -121,40 +121,19 @@ void predict(int numIn, int numHidNodes, Matrix mV, Matrix mW){
 		printf("\n");
 	}
 	printf("Predicted\n");
+	Matrix mOut = mY.argMaxRow();
 	for(int i = 0; i < mY.numRows(); i++){
-		mY.writeLine(i);
+		mOut.writeLine(i);
 		printf("\n");
 	}
 
 	//Print confusion matricies
-	for(int c = 0; c < mY.numCols(); c++){
-		Matrix cm(2,2,0.0);
+	
+	for(int c = 0; c < mOut.numCols(); c++){
+		Matrix cm(mY.numCols(),mY.numCols(),0.0);
 		for(int r = 0; r < mY.numRows(); r++){
 
-			mT.get(0,0);
-
-			int myint = mY.get(r,c);
-			int mtint = mT.get(r,c);
-			if	( myint == 0.0 && mtint == 0.0 ){
-
-				cm.inc(0,0);
-
-			}else if( myint == 0.0 && mtint == 1.0 ){
-
-				cm.inc(1,0);
-
-			}else if( myint == 1.0 && mtint == 0.0 ){
-
-				cm.inc(0,1);
-
-			}else if( myint == 1.0 && mtint == 1.0 ){
-
-				cm.inc(1,1);
-
-			}else{
-				printf("Error creating confusion matrix\n");
-				exit(1);
-			}
+			cm.inc(mT.get(r,c),mOut.get(r,c));
 		}
 		cm.printfmt("Confusion Matrix");
 		
