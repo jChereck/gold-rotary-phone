@@ -18,6 +18,7 @@ randmt.cpp
 
 SRCS=\
 $(BIN).cpp\
+$(BIN2).cpp\
 mat.cpp\
 rand.cpp
 
@@ -27,6 +28,7 @@ mat.h
 
 OBJS1=\
 $(BIN).o\
+$(BIN2).o\
 mat.o\
 rand.o
 
@@ -34,6 +36,8 @@ OBJS2=\
 $(BIN2).o\
 mat.o\
 rand.o
+
+all: $(BIN) $(BIN2)
 
 $(BIN): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(OBJS) $(LIBS) -o $(BIN)
