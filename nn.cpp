@@ -5,14 +5,22 @@
 #define weightInitMax 1.000
 #define weightInitMin -1.000
 #define TRANSFER_SLOPE 2.50
-#define ITERATIONS 10000
-#define ETA 0.100
+#define ITERATIONS 50000
+#define ETA 0.200
 
 void train(int numIn, int numHidNodes, Matrix& mV, Matrix& mW);
 void predict(int numIn, int numHidNodes, Matrix mV, Matrix mW);
 
 double transfer(double x){
 	return 1/(1.0 + exp(-1.0 * TRANSFER_SLOPE * x));
+}
+
+double step(double x){
+	if(x > 0.5){
+		return 1.0;
+	}else{
+		return 0.0;
+	}
 }
 
 int main(){
@@ -106,10 +114,50 @@ void predict(int numIn, int numHidNodes, Matrix mV, Matrix mW){
 	mY.map(transfer);
 
 	//Print output to assignment specs
+	mY.map(step);
+	printf("Target\n");
+	for(int i = 0; i < mT.numRows(); i++){
+		mT.writeLine(i);
+		printf("\n");
+	}
+	printf("Predicted\n");
 	for(int i = 0; i < mY.numRows(); i++){
-		mIn.writeLine(i);
 		mY.writeLine(i);
 		printf("\n");
+	}
+
+	//Print confusion matricies
+	for(int c = 0; c < mY.numCols(); c++){
+		Matrix cm(2,2,0.0);
+		for(int r = 0; r < mY.numRows(); r++){
+
+			mT.get(0,0);
+
+			int myint = mY.get(r,c);
+			int mtint = mT.get(r,c);
+			if	( myint == 0.0 && mtint == 0.0 ){
+
+				cm.inc(0,0);
+
+			}else if( myint == 0.0 && mtint == 1.0 ){
+
+				cm.inc(1,0);
+
+			}else if( myint == 1.0 && mtint == 0.0 ){
+
+				cm.inc(0,1);
+
+			}else if( myint == 1.0 && mtint == 1.0 ){
+
+				cm.inc(1,1);
+
+			}else{
+				printf("Error creating confusion matrix\n");
+				exit(1);
+			}
+		}
+		cm.printfmt("Confusion Matrix");
+		
 	}
 
 	return;
