@@ -1,5 +1,6 @@
 # Example makefile for using the mat libraries
 BIN=nn
+BIN2=nnoneof
 
 # what you want to name your tar/zip file:
 TARNAME=ChereckAss1CS475
@@ -24,13 +25,21 @@ HDRS=\
 rand.h\
 mat.h
 
-OBJS=\
+OBJS1=\
 $(BIN).o\
+mat.o\
+rand.o
+
+OBJS2=\
+$(BIN2).o\
 mat.o\
 rand.o
 
 $(BIN): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(OBJS) $(LIBS) -o $(BIN)
+
+$(BIN2): $(OBJS2)
+	$(CXX) $(CXXFLAGS) $(OBJS2) $(LIBS) -o $(BIN)
 
 clean:
 	/bin/rm -f *.o $(BIN)*.tar *~ core gmon.out a.out
