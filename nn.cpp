@@ -149,7 +149,7 @@ void train(int numIn, int numHidNodes, Matrix& mV, Matrix& mW){
 	mV.rand(weightInitMin, weightInitMax);
 
 	//Create Weights for H->Y
-	mW = Matrix(mXb.numCols(), mT.numCols(), 2.0); //2.0 is arbitrary and is overwritten
+	mW = Matrix(mHb.numCols(), mT.numCols(), 2.0); //2.0 is arbitrary and is overwritten
 	mW.setName("Weights W (H->Y)");
 	mW.rand(weightInitMin, weightInitMax);
 
